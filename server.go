@@ -22,7 +22,7 @@ type Request struct {
 
 type Response struct {
 	Status     string
-	Headers    map[string]string
+	Headers    map[string][]string
 	BodyLength int
 }
 
@@ -58,6 +58,15 @@ func newTaskFactory(generateId UniqueIdGenerator) func(r Request) FetchTask {
 	}
 }
 
+func newResponse(status string, headers http.Header, length int) *Response {
+	resp := Response{
+		Status:     status,
+		BodyLength: length}
+	resp.Headers = make(http.Header)
+	resp.Headers = headers
+	return &resp
+}
+
 func executeRequest(r Request) (*Response, error) {
 	req, _ := http.NewRequest(r.Method, r.Schema+"://"+r.Host+r.Path, strings.NewReader(r.Body))
 	res, err := http.DefaultClient.Do(req)
@@ -70,10 +79,7 @@ func executeRequest(r Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(res)
-	fmt.Println(string(body))
-	return &Response{}, nil
+	return newResponse(res.Status, res.Header, len(body)), nil
 }
 
 func NewIdGeneratorMock() UniqueIdGenerator {
