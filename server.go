@@ -110,31 +110,31 @@ func (s *Server) Listen() {
 			task.Response = *resp
 		}
 		s.tasks = append(s.tasks, task)
-		ctx.JSON(200, gin.H{
+		ctx.JSON(http.StatusOK, gin.H{
 			"task": task,
 		})
 
 	})
 	router.GET("/tasks", func(ctx *gin.Context) {
-		ctx.JSON(200, s.tasks)
+		ctx.JSON(http.StatusOK, s.tasks)
 	})
 	router.GET("/task/:id", func(ctx *gin.Context) {
 		if task, _, err := getTaskById(s.tasks, TaskId(ctx.Param("id"))); err != nil {
-			ctx.JSON(404, gin.H{
+			ctx.JSON(http.StatusNotFound, gin.H{
 				"error": "task not found",
 			})
 		} else {
-			ctx.JSON(200, task)
+			ctx.JSON(http.StatusOK, task)
 		}
 	})
 	router.DELETE("/task/:id", func(ctx *gin.Context) {
 		if _, index, err := getTaskById(s.tasks, TaskId(ctx.Param("id"))); err != nil {
-			ctx.JSON(404, gin.H{
+			ctx.JSON(http.StatusNotFound, gin.H{
 				"error": "task not found",
 			})
 		} else {
 			s.tasks = append(s.tasks[:index], s.tasks[index+1:]...)
-			ctx.Status(200)
+			ctx.Status(http.StatusOK)
 		}
 
 	})
