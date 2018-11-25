@@ -13,6 +13,7 @@ type UniqueIdGenerator func() TaskId
 
 type Request struct {
 	Method  string
+	Schema  string
 	Path    string
 	Host    string
 	Body    string
@@ -58,7 +59,7 @@ func newTaskFactory(generateId UniqueIdGenerator) func(r Request) FetchTask {
 }
 
 func executeRequest(r Request) (Response, error) {
-	req, _ := http.NewRequest(r.Method, r.Host+r.Path, strings.NewReader(r.Body))
+	req, _ := http.NewRequest(r.Method, r.Schema+"://"+r.Host+r.Path, strings.NewReader(r.Body))
 	res, _ := http.DefaultClient.Do(req)
 	defer res.Body.Close()
 
