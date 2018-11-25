@@ -3,7 +3,9 @@ package fetchtask
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 type TaskId string
@@ -17,12 +19,19 @@ type Request struct {
 	Headers map[string]string
 }
 
+type Response struct {
+	Status     string
+	Headers    map[string]string
+	BodyLength int
+}
+
 var TaskNotFound error
 
 type FetchTask struct {
-	Id      TaskId
-	Request Request
-	Error   error
+	Id       TaskId
+	Request  Request
+	Response Response
+	Error    error
 }
 
 type Server struct {
@@ -48,8 +57,16 @@ func newTaskFactory(generateId UniqueIdGenerator) func(r Request) FetchTask {
 	}
 }
 
-func executeRequest(r Request) error {
-	return nil
+func executeRequest(r Request) (Response, error) {
+	req, _ := http.NewRequest(r.Method, r.Host+r.Path, strings.NewReader(r.Body))
+	res, _ := http.DefaultClient.Do(req)
+	defer res.Body.Close()
+
+	body, _ := ioutil.ReadAll(res.Body)
+
+	fmt.Println(res)
+	fmt.Println(string(body))
+	return Response{}, nil
 }
 
 func NewIdGeneratorMock() UniqueIdGenerator {
@@ -74,10 +91,10 @@ func (s *Server) Listen() {
 			return
 		}
 		task := newTask(r)
-		task.Error = executeRequest(r)
+		task.Response, task.Error = executeRequest(r)
 		s.tasks = append(s.tasks, task)
 		ctx.JSON(200, gin.H{
-			"id": task.Id,
+			"task": task,
 		})
 
 	})
