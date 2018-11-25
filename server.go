@@ -11,6 +11,8 @@ import (
 type TaskId string
 type UniqueIdGenerator func() TaskId
 
+var TaskNotFound error
+
 type Request struct {
 	Method  string
 	Schema  string
@@ -25,8 +27,6 @@ type Response struct {
 	Headers    map[string][]string
 	BodyLength int
 }
-
-var TaskNotFound error
 
 type FetchTask struct {
 	Id       TaskId
