@@ -58,16 +58,22 @@ func newTaskFactory(generateId UniqueIdGenerator) func(r Request) FetchTask {
 	}
 }
 
-func executeRequest(r Request) (Response, error) {
+func executeRequest(r Request) (*Response, error) {
 	req, _ := http.NewRequest(r.Method, r.Schema+"://"+r.Host+r.Path, strings.NewReader(r.Body))
-	res, _ := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	defer res.Body.Close()
 
-	body, _ := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	fmt.Println(res)
 	fmt.Println(string(body))
-	return Response{}, nil
+	return &Response{}, nil
 }
 
 func NewIdGeneratorMock() UniqueIdGenerator {
@@ -92,7 +98,11 @@ func (s *Server) Listen() {
 			return
 		}
 		task := newTask(r)
-		task.Response, task.Error = executeRequest(r)
+		if resp, err := executeRequest(r); err != nil {
+			task.Error = err
+		} else {
+			task.Response = *resp
+		}
 		s.tasks = append(s.tasks, task)
 		ctx.JSON(200, gin.H{
 			"task": task,
